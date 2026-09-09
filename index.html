@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>hello angel17</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+  :root{
+    --bg1:#0B0B0C;
+    --bg2:#1C1C1E;
+    --paper:#F5F5F3;
+    --ink:#111111;
+    --ink-soft:#6E6E70;
+    --line:rgba(255,255,255,0.14);
+    --card:rgba(255,255,255,0.06);
+    --silver:#C9C9CC;
+  }
+
+  *{box-sizing:border-box;}
+
+  html,body{height:100%;}
+
+  body{
+    margin:0;
+    color:var(--paper);
+    font-family:'Quicksand',sans-serif;
+    min-height:100vh;
+    background:radial-gradient(circle at 30% 10%,var(--bg2) 0%,var(--bg1) 60%);
+    position:relative;
+    overflow-x:hidden;
+  }
+
+  .stars{
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:0;
+  }
+
+  .star{
+    position:absolute;
+    width:3px;
+    height:3px;
+    background:#fff;
+    border-radius:50%;
+    box-shadow:0 0 6px 1px rgba(255,255,255,0.7);
+    animation:twinkle 3s ease-in-out infinite;
+  }
+
+  @keyframes twinkle{
+    0%,100%{opacity:.2;transform:scale(.8);}
+    50%{opacity:1;transform:scale(1.2);}
+  }
+
+  .float-deco{
+    position:fixed;
+    font-size:26px;
+    pointer-events:none;
+    z-index:0;
+    opacity:.7;
+    filter:grayscale(1) contrast(1.1);
+    animation:drift 7s ease-in-out infinite;
+  }
+
+  @keyframes drift{
+    0%,100%{transform:translateY(0) rotate(-4deg);}
+    50%{transform:translateY(-18px) rotate(4deg);}
+  }
+
+  header,.controls-row,.grid,.empty{
+    position:relative;
+    z-index:1;
+  }
+
+  header{
+    padding:56px 24px 20px;
+    text-align:center;
+    max-width:900px;
+    margin:0 auto;
+  }
+
+  .halo{
+    font-size:34px;
+    margin-bottom:6px;
+  }
+
+  h1{
+    font-family:'Playfair Display',serif;
+    font-weight:700;
+    font-size:clamp(34px,7vw,56px);
+    margin:0 0 10px;
+    letter-spacing:.02em;
+    color:#fff;
+    text-shadow:0 0 24px rgba(255,255,255,.25);
+  }
+
+  header p{
+    margin:0 auto;
+    color:var(--ink-soft);
+    font-size:15px;
+    max-width:46ch;
+    line-height:1.6;
+  }
+
+  .controls-row{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:12px;
+    max-width:900px;
+    margin:0 auto 24px;
+    padding:0 24px;
+    flex-wrap:wrap;
+  }
+
+  .pill-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    border:1px solid var(--line);
+    padding:12px 22px;
+    border-radius:999px;
+    font-family:'Quicksand',sans-serif;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    transition:transform .15s ease,background .15s ease;
+    background:transparent;
+    color:#fff;
+  }
+
+  .pill-btn:hover{
+    transform:translateY(-2px);
+    background:rgba(255,255,255,.08);
+  }
+
+  .add-btn{
+    background:#fff;
+    color:#111;
+    border-color:#fff;
+  }
+
+  .add-btn:hover{
+    background:var(--silver);
+  }
+
+  .music-btn.playing{
+    background:#fff;
+    color:#111;
+  }
+
+  .pill-btn svg{
+    width:16px;
+    height:16px;
+  }
+
+  input[type=file]{
+    display:none;
+  }
+
+  .owner-panel{
+    display:none;
+    position:relative;
+    z-index:2;
+    max-width:360px;
+    margin:0 auto 24px;
+    padding:18px;
+    border:1px solid var(--line);
+    border-radius:18px;
+    background:rgba(255,255,255,.06);
+    backdrop-filter:blur(10px);
+    text-align:center;
+  }
+
+  .owner-panel h3{
+    margin:0 0 12px;
+    font-family:'Playfair Display',serif;
+  }
+
+  .owner-panel input{
+    width:100%;
+    padding:11px 14px;
+    margin-bottom:10px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:rgba(255,255,255,.06);
+    color:#fff;
+    font-family:'Quicksand',sans-serif;
+    outline:none;
+  }
+
+  .owner-panel input::placeholder{
+    color:var(--ink-soft);
+  }
+
+  .owner-panel button{
+    width:100%;
+    padding:11px;
+    border:0;
+    border-radius:999px;
+    background:#fff;
+    color:#111;
+    font-family:'Quicksand',sans-serif;
+    font-weight:700;
+    cursor:pointer;
+  }
+
+  .owner-error{
+    color:#f2a1a1;
+    font-size:12px;
+    margin-top:9px;
+    display:none;
+  }
+
+  .owner-status{
+    color:#bdbdc1;
+    font-size:12px;
+    margin-top:10px;
+  }
+
+  .grid{
+    max-width:900px;
+    margin:0 auto;
+    padding:0 24px 80px;
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(230px,1fr));
+    gap:26px;
+  }
+
+  .card{
+    background:var(--card);
+    backdrop-filter:blur(6px);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:14px 14px 16px;
+    box-shadow:0 8px 24px rgba(0,0,0,.4);
+    transition:transform .2s ease,box-shadow .2s ease;
+  }
+
+  .card:hover{
+    transform:translateY(-4px) rotate(-.4deg);
+    box-shadow:0 14px 30px rgba(0,0,0,.55);
+  }
+
+  .card .frame{
+    width:100%;
+    aspect-ratio:1/1;
+    background:linear-gradient(135deg,#2A2A2C,#141416);
+    overflow:hidden;
+    position:relative;
+    margin-bottom:12px;
+    border-radius:12px;
+  }
+
+  .card .frame img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+    filter:grayscale(1) contrast(1.05);
+    transition:filter .2s ease;
+  }
+
+  .card .frame:hover img{
+    filter:grayscale(.2) contrast(1.05);
+  }
+
+  .remove-btn{
+    position:absolute;
+    top:8px;
+    right:8px;
+    width:26px;
+    height:26px;
+    border-radius:50%;
+    background:rgba(255,255,255,.85);
+    color:#111;
+    border:none;
+    font-size:15px;
+    line-height:1;
+    cursor:pointer;
+    display:none;
+    align-items:center;
+    justify-content:center;
+  }
+
+  body.owner-mode .remove-btn{
+    display:flex;
+  }
+
+  .caption{
+    width:100%;
+    resize:none;
+    border:none;
+    background:transparent;
+    font-family:'Playfair Display',serif;
+    font-style:italic;
+    font-size:15px;
+    color:var(--paper);
+    line-height:1.4;
+    padding:0;
+    min-height:44px;
+  }
+
+  .caption::placeholder{
+    color:var(--ink-soft);
+    opacity:.8;
+  }
+
+  .caption:focus{
+    outline:none;
+  }
+
+  body:not(.owner-mode) .caption{
+    pointer-events:none;
+  }
+
+  .empty{
+    max-width:900px;
+    margin:0 auto;
+    padding:0 24px 80px;
+    color:var(--ink-soft);
+    font-size:15px;
+    text-align:center;
+  }
+
+  .loading{
+    color:var(--ink-soft);
+    text-align:center;
+    padding:20px;
+    grid-column:1/-1;
+  }
+</style>
+</head>
+
+<body>
+
+<div class="stars" id="stars"></div>
+
+<div class="float-deco" style="top:14%;left:6%;animation-delay:0s;">✧</div>
+<div class="float-deco" style="top:22%;right:8%;animation-delay:1.5s;">✦</div>
+<div class="float-deco" style="bottom:14%;left:10%;animation-delay:3s;">✧</div>
+<div class="float-deco" style="bottom:20%;right:12%;animation-delay:2s;">✦</div>
+
+<header>
+  <div class="halo">🕊️</div>
+  <h1>hello angel17</h1>
+  <p>hello angel17! Look how good you are at moderating!</p>
+</header>
+
+<div class="controls-row">
+
+  <button class="pill-btn add-btn" id="ownerPhotoBtn" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 5v14M5 12h14"/>
+    </svg>
+    Add photo
+  </button>
+
+  <input type="file" id="fileInput" accept="image/*" multiple>
+
+  <button class="pill-btn music-btn" id="musicBtn" type="button">
+    <svg viewBox="0 0 24 24" fill="currentColor">
+      <path d="M9 18V5l12-2v13"/>
+      <circle cx="6" cy="18" r="3" fill="none" stroke="currentColor" stroke-width="2"/>
+      <circle cx="18" cy="16" r="3" fill="none" stroke="currentColor" stroke-width="2"/>
+    </svg>
+    <span id="musicLabel">Play music</span>
+  </button>
+
+</div>
+
+<!-- OWNER LOGIN -->
+<div class="owner-panel" id="ownerPanel">
+
+  <h3>Owner login</h3>
+
+  <input
+    type="email"
+    id="ownerEmail"
+    placeholder="Your Supabase email"
+    autocomplete="email"
+  >
+
+  <input
+    type="password"
+    id="ownerPassword"
+    placeholder="Your Supabase password"
+    autocomplete="current-password"
+  >
+
+  <button id="loginBtn" type="button">
+    Sign in
+  </button>
+
+  <div class="owner-error" id="ownerError"></div>
+
+  <div class="owner-status" id="ownerStatus">
+    Sign in with your Supabase owner account.
+  </div>
+
+</div>
+
+<div class="grid" id="photoGrid"></div>
+
+<div class="empty" id="emptyState">
+  No photos added yet. Click "Add photo" above to add some memory frames!
+</div>
+
+<audio
+  id="bgSong"
+  loop
+  src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=lofi-study-112191.mp3">
+</audio>
+
+<script>
+
+  /* =========================================
+     SUPABASE CONFIG
+  ========================================= */
+
+  const SUPABASE_URL = 'https://kbdgytljnkoztmsidwpj.supabase.co';
+
+  const SUPABASE_PUBLISHABLE_KEY =
+    'sb_publishable_-DDq6623XRNrWQmSnT0Xpg_8_ESgpoF';
+
+  const { createClient } =
+    supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_PUBLISHABLE_KEY
+    );
+
+  const OWNER_ID =
+    '4c553800-2043-456e-a815-edd45f626797';
+
+  const BUCKET = 'photos';
+
+
+  /* =========================================
+     BASIC ELEMENTS
+  ========================================= */
+
+  function id(name){
+    return document.getElementById(name);
+  }
+
+  const starsContainer = id('stars');
+
+  for(let i = 0; i < 40; i++){
+
+    const star = document.createElement('div');
+
+    star.className = 'star';
+
+    star.style.top =
+      Math.random() * 100 + '%';
+
+    star.style.left =
+      Math.random() * 100 + '%';
+
+    star.style.animationDelay =
+      Math.random() * 3 + 's';
+
+    starsContainer.appendChild(star);
+  }
+
+
+  /* =========================================
+     PHOTO ELEMENTS
+  ========================================= */
+
+  const ownerPhotoBtn = id('ownerPhotoBtn');
+  const fileInput = id('fileInput');
+  const photoGrid = id('photoGrid');
+  const emptyState = id('emptyState');
+
+  const ownerPanel = id('ownerPanel');
+  const ownerEmail = id('ownerEmail');
+  const ownerPassword = id('ownerPassword');
+  const loginBtn = id('loginBtn');
+  const ownerError = id('ownerError');
+  const ownerStatus = id('ownerStatus');
+
+
+  /* =========================================
+     OWNER MODE
+  ========================================= */
+
+  let ownerMode = false;
+
+  async function checkOwner(){
+
+    const {
+      data: { session }
+    } = await supabase.auth.getSession();
+
+    if(
+      session &&
+      session.user &&
+      session.user.id === OWNER_ID
+    ){
+
+      ownerMode = true;
+
+      document.body.classList.add('owner-mode');
+
+      ownerPhotoBtn.textContent = 'Add photo';
+
+      ownerPanel.style.display = 'none';
+
+      return true;
+    }
+
+    ownerMode = false;
+
+    document.body.classList.remove('owner-mode');
+
+    return false;
+  }
+
+
+  ownerPhotoBtn.addEventListener('click', async () => {
+
+    const isOwner = await checkOwner();
+
+    if(isOwner){
+
+      fileInput.click();
+
+      return;
+    }
+
+    ownerPanel.style.display =
+      ownerPanel.style.display === 'block'
+      ? 'none'
+      : 'block';
+
+  });
+
+
+  /* =========================================
+     OWNER LOGIN
+  ========================================= */
+
+  loginBtn.addEventListener('click', async () => {
+
+    ownerError.style.display = 'none';
+
+    const email =
+      ownerEmail.value.trim();
+
+    const password =
+      ownerPassword.value;
+
+    if(!email || !password){
+
+      ownerError.textContent =
+        'Enter your Supabase email and password.';
+
+      ownerError.style.display = 'block';
+
+      return;
+    }
+
+    loginBtn.disabled = true;
+    loginBtn.textContent = 'Signing in...';
+
+    const {
+      data,
+      error
+    } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    loginBtn.disabled = false;
+    loginBtn.textContent = 'Sign in';
+
+    if(error){
+
+      ownerError.textContent =
+        error.message;
+
+      ownerError.style.display =
+        'block';
+
+      return;
+    }
+
+    if(!data.user || data.user.id !== OWNER_ID){
+
+      await supabase.auth.signOut();
+
+      ownerError.textContent =
+        'That account is not the website owner.';
+
+      ownerError.style.display =
+        'block';
+
+      return;
+    }
+
+    ownerEmail.value = '';
+    ownerPassword.value = '';
+
+    ownerStatus.textContent =
+      'Owner mode enabled ✓';
+
+    await checkOwner();
+
+  });
+
+
+  /* =========================================
+     LOAD PHOTOS
+  ========================================= */
+
+  async function loadPhotos(){
+
+    photoGrid.innerHTML =
+      '<div class="loading">Loading memories...</div>';
+
+    const {
+      data,
+      error
+    } = await supabase
+      .from('photos')
+      .select('*')
+      .order('created_at', {
+        ascending: false
+      });
+
+    if(error){
+
+      console.error(error);
+
+      photoGrid.innerHTML = '';
+
+      emptyState.textContent =
+        'Could not load photos. Check your Supabase setup.';
+
+      emptyState.style.display =
+        'block';
+
+      return;
+    }
+
+    photoGrid.innerHTML = '';
+
+    if(!data || data.length === 0){
+
+      emptyState.style.display =
+        'block';
+
+      return;
+    }
+
+    emptyState.style.display =
+      'none';
+
+    data.forEach(photo => {
+
+      createCard(
+        photo.photo_url,
+        photo.description || '',
+        photo.id
+      );
+
+    });
+
+  }
+
+
+  /* =========================================
+     CREATE PHOTO CARD
+  ========================================= */
+
+  function createCard(
+    imgSrc,
+    description,
+    photoId
+  ){
+
+    const card =
+      document.createElement('div');
+
+    card.className = 'card';
+
+    const frame =
+      document.createElement('div');
+
+    frame.className = 'frame';
+
+    const img =
+      document.createElement('img');
+
+    img.src = imgSrc;
+    img.alt = 'Memory photo';
+
+    const removeBtn =
+      document.createElement('button');
+
+    removeBtn.className =
+      'remove-btn';
+
+    removeBtn.title =
+      'Remove photo';
+
+    removeBtn.innerHTML =
+      '&times;';
+
+    frame.appendChild(img);
+    frame.appendChild(removeBtn);
+
+    const caption =
+      document.createElement('textarea');
+
+    caption.className =
+      'caption';
+
+    caption.placeholder =
+      'Write a memory note...';
+
+    caption.value =
+      description;
+
+    card.appendChild(frame);
+    card.appendChild(caption);
+
+    photoGrid.appendChild(card);
+
+
+    /* DELETE */
+
+    removeBtn.addEventListener(
+      'click',
+      async () => {
+
+        if(!ownerMode){
+
+          alert('Owner access required.');
+
+          return;
+        }
+
+        const confirmed =
+          confirm('Delete this photo?');
+
+        if(!confirmed) return;
+
+        removeBtn.disabled = true;
+
+        const {
+          error
+        } = await deletePhoto(
+          photoId,
+          imgSrc
+        );
+
+        if(error){
+
+          console.error(error);
+
+          alert(
+            'Could not delete the photo.'
+          );
+
+          removeBtn.disabled = false;
+
+          return;
+        }
+
+        card.remove();
+
+        if(photoGrid.children.length === 0){
+
+          emptyState.style.display =
+            'block';
+
+        }
+
+      }
+    );
+
+
+    /* SAVE DESCRIPTION */
+
+    let saveTimer;
+
+    caption.addEventListener(
+      'input',
+      () => {
+
+        if(!ownerMode) return;
+
+        clearTimeout(saveTimer);
+
+        saveTimer =
+          setTimeout(
+            async () => {
+
+              const {
+                error
+              } = await supabase
+                .from('photos')
+                .update({
+                  description:
+                    caption.value
+                })
+                .eq('id', photoId);
+
+              if(error){
+
+                console.error(
+                  'Description save failed:',
+                  error
+                );
+
+              }
+
+            },
+            600
+          );
+
+      }
+    );
+
+  }
+
+
+  /* =========================================
+     UPLOAD PHOTOS
+  ========================================= */
+
+  fileInput.addEventListener(
+    'change',
+    async (event) => {
+
+      if(!ownerMode){
+
+        alert('Owner access required.');
+
+        fileInput.value = '';
+
+        return;
+      }
+
+      const files =
+        Array.from(event.target.files);
+
+      for(const file of files){
+
+        await uploadPhoto(file);
+
+      }
+
+      fileInput.value = '';
+
+      await loadPhotos();
+
+    }
+  );
+
+
+  async function uploadPhoto(file){
+
+    if(!file.type.startsWith('image/')){
+
+      alert(
+        `${file.name} is not an image.`
+      );
+
+      return;
+    }
+
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
+
+    if(!user || user.id !== OWNER_ID){
+
+      alert('Owner access required.');
+
+      return;
+    }
+
+    const extension =
+      file.name.split('.').pop();
+
+    const fileName =
+      `${crypto.randomUUID()}.${extension}`;
+
+    const filePath =
+      `${OWNER_ID}/${fileName}`;
+
+
+    const {
+      error: uploadError
+    } = await supabase.storage
+      .from(BUCKET)
+      .upload(
+        filePath,
+        file,
+        {
+          cacheControl:'3600',
+          upsert:false
+        }
+      );
+
+    if(uploadError){
+
+      console.error(
+        'Upload error:',
+        uploadError
+      );
+
+      alert(
+        'Photo upload failed: ' +
+        uploadError.message
+      );
+
+      return;
+    }
+
+
+    const {
+      data: publicData
+    } = supabase.storage
+      .from(BUCKET)
+      .getPublicUrl(filePath);
+
+    const publicUrl =
+      publicData.publicUrl;
+
+
+    const {
+      error: databaseError
+    } = await supabase
+      .from('photos')
+      .insert({
+        photo_url:publicUrl,
+        description:''
+      });
+
+
+    if(databaseError){
+
+      console.error(
+        'Database error:',
+        databaseError
+      );
+
+      /* Clean up uploaded file if database insert fails */
+
+      await supabase.storage
+        .from(BUCKET)
+        .remove([filePath]);
+
+      alert(
+        'Photo uploaded but could not be saved.'
+      );
+
+    }
+
+  }
+
+
+  /* =========================================
+     DELETE PHOTO
+  ========================================= */
+
+  async function deletePhoto(
+    photoId,
+    publicUrl
+  ){
+
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
+
+    if(!user || user.id !== OWNER_ID){
+
+      return {
+        error:new Error(
+          'Owner access required.'
+        )
+      };
+
+    }
+
+
+    /* Get filename from public URL */
+
+    let filePath = null;
+
+    try{
+
+      const marker =
+        `/storage/v1/object/public/${BUCKET}/`;
+
+      const index =
+        publicUrl.indexOf(marker);
+
+      if(index !== -1){
+
+        filePath =
+          decodeURIComponent(
+            publicUrl.substring(
+              index + marker.length
+            )
+          );
+
+      }
+
+    }catch(error){
+
+      console.error(error);
+
+    }
+
+
+    if(filePath){
+
+      const {
+        error: storageError
+      } = await supabase.storage
+        .from(BUCKET)
+        .remove([filePath]);
+
+      if(storageError){
+
+        console.error(
+          'Storage delete error:',
+          storageError
+        );
+
+      }
+
+    }
+
+
+    const {
+      error: databaseError
+    } = await supabase
+      .from('photos')
+      .delete()
+      .eq('id', photoId);
+
+    return {
+      error:databaseError || null
+    };
+
+  }
+
+
+  /* =========================================
+     MUSIC
+  ========================================= */
+
+  const musicBtn =
+    id('musicBtn');
+
+  const musicLabel =
+    id('musicLabel');
+
+  const bgSong =
+    id('bgSong');
+
+  musicBtn.addEventListener(
+    'click',
+    () => {
+
+      if(bgSong.paused){
+
+        bgSong.play();
+
+        musicBtn.classList.add(
+          'playing'
+        );
+
+        musicLabel.textContent =
+          'Pause music';
+
+      }else{
+
+        bgSong.pause();
+
+        musicBtn.classList.remove(
+          'playing'
+        );
+
+        musicLabel.textContent =
+          'Play music';
+
+      }
+
+    }
+  );
+
+
+  /* =========================================
+     START
+  ========================================= */
+
+  async function start(){
+
+    await checkOwner();
+
+    await loadPhotos();
+
+  }
+
+  start();
+
+</script>
+
+</body>
+</html>
