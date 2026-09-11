@@ -224,14 +224,44 @@
     text-align:center;
   }
 
-  .announcement-wrap{position:relative;z-index:1;max-width:900px;margin:0 auto 18px;padding:0 24px}
-  .announcement{display:none;border:1px solid var(--line);background:rgba(255,255,255,.07);backdrop-filter:blur(8px);border-radius:16px;padding:14px 16px;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.28)}
-  .announcement.show{display:block}.announcement-title{font-family:'Playfair Display',serif;font-weight:700;font-size:17px;margin-bottom:5px}
-  .announcement-text{color:var(--silver);font-size:14px;line-height:1.5;white-space:pre-wrap}
-  .announcement-editor{display:none;margin-top:10px;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap}.announcement-editor.show{display:flex}
-  .announcement-input{flex:1 1 280px;min-width:0;padding:10px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:#fff;font-family:'Quicksand',sans-serif;font-size:14px}
-  .announcement-save,.announcement-clear{padding:10px 16px;border-radius:999px;font-family:'Quicksand',sans-serif;font-weight:600;cursor:pointer}
-  .announcement-save{border:1px solid #fff;background:#fff;color:#111}.announcement-clear{border:1px solid var(--line);background:transparent;color:#fff}
+  /* Announcement */
+  .announcement-wrap{
+    position:relative; z-index:1; max-width:900px;
+    margin:0 auto 18px; padding:0 24px;
+  }
+  .announcement{
+    display:none; border:1px solid var(--line);
+    background:rgba(255,255,255,.07); backdrop-filter:blur(8px);
+    border-radius:16px; padding:14px 16px; text-align:center;
+    box-shadow:0 8px 24px rgba(0,0,0,.28);
+  }
+  .announcement.show{display:block;}
+  .announcement-title{
+    font-family:'Playfair Display',serif; font-weight:700;
+    font-size:17px; margin-bottom:5px;
+  }
+  .announcement-text{
+    color:var(--silver); font-size:14px; line-height:1.5;
+    white-space:pre-wrap; overflow-wrap:anywhere;
+  }
+  .announcement-editor{
+    display:none; margin-top:10px; gap:8px;
+    align-items:center; justify-content:center; flex-wrap:wrap;
+  }
+  .announcement-editor.show{display:flex;}
+  .announcement-input{
+    flex:1 1 280px; min-width:0; padding:10px 14px;
+    border-radius:12px; border:1px solid var(--line);
+    background:rgba(255,255,255,.06); color:#fff;
+    font-family:'Quicksand',sans-serif; font-size:14px;
+  }
+  .announcement-save,.announcement-clear{
+    padding:10px 16px; border-radius:999px;
+    font-family:'Quicksand',sans-serif; font-weight:600; cursor:pointer;
+  }
+  .announcement-save{border:1px solid #fff;background:#fff;color:#111;}
+  .announcement-clear{border:1px solid var(--line);background:transparent;color:#fff;}
+  .announcement-status{width:100%;font-size:12px;color:var(--ink-soft);min-height:16px;}
 
 </style>
 </head>
@@ -250,11 +280,15 @@
 </header>
 
 <div class="announcement-wrap">
-  <div class="announcement" id="announcementBox"><div class="announcement-title">📢 Announcement</div><div class="announcement-text" id="announcementText"></div></div>
+  <div class="announcement" id="announcementBox">
+    <div class="announcement-title">📢 Announcement</div>
+    <div class="announcement-text" id="announcementText"></div>
+  </div>
   <div class="announcement-editor" id="announcementEditor">
-    <input class="announcement-input" id="announcementInput" maxlength="500" placeholder="Write an announcement for everyone…">
-    <button class="announcement-save" id="announcementSave" type="button">Post announcement</button>
+    <input class="announcement-input" id="announcementInput" type="text" maxlength="500" placeholder="Write an announcement for everyone…">
+    <button class="announcement-save" id="announcementSave" type="button">Post</button>
     <button class="announcement-clear" id="announcementClear" type="button">Remove</button>
+    <div class="announcement-status" id="announcementStatus"></div>
   </div>
 </div>
 
@@ -310,34 +344,98 @@
   const BUCKET = 'photos';
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
-  const announcementBox=document.getElementById('announcementBox');
-  const announcementText=document.getElementById('announcementText');
-  const announcementEditor=document.getElementById('announcementEditor');
-  const announcementInput=document.getElementById('announcementInput');
-  const announcementSave=document.getElementById('announcementSave');
-  const announcementClear=document.getElementById('announcementClear');
+  /* Announcement uses the existing photo_details table.
+     Public visitors can read it; the logged-in owner can change it. */
+  const ANNOUNCEMENT_KEY = '__site_announcement__';
+  const announcementBox = document.getElementById('announcementBox');
+  const announcementText = document.getElementById('announcementText');
+  const announcementEditor = document.getElementById('announcementEditor');
+  const announcementInput = document.getElementById('announcementInput');
+  const announcementSave = document.getElementById('announcementSave');
+  const announcementClear = document.getElementById('announcementClear');
+  const announcementStatus = document.getElementById('announcementStatus');
 
   async function loadAnnouncement(){
-    const {data,error}=await sb.from('announcements').select('id,message').eq('id',1).maybeSingle();
-    if(error){console.error('Could not load announcement:',error);return;}
-    const message=data?.message||'';
-    announcementText.textContent=message; announcementInput.value=message;
-    announcementBox.classList.toggle('show',!!message.trim());
+    const { data, error } = await sb
+      .from('photo_details')
+      .select('caption')
+      .eq('storage_path', ANNOUNCEMENT_KEY)
+      .maybeSingle();
+
+    if(error){
+      console.error('Could not load announcement:', error);
+      if(ownerUnlocked) announcementStatus.textContent = 'Could not load announcement: ' + error.message;
+      return;
+    }
+
+    const message = data?.caption || '';
+    announcementText.textContent = message;
+    announcementInput.value = message;
+    announcementBox.classList.toggle('show', Boolean(message.trim()));
   }
-  function updateAnnouncementControls(){announcementEditor.classList.toggle('show',ownerUnlocked);}
-  announcementSave.addEventListener('click',async()=>{
-    if(!ownerUnlocked)return;
-    const message=announcementInput.value.trim();
-    if(!message){alert('Write an announcement first.');return;}
-    const {error}=await sb.from('announcements').upsert({id:1,message},{onConflict:'id'});
-    if(error){alert('Could not post announcement: '+error.message);return;}
-    await loadAnnouncement();
+
+  function updateAnnouncementControls(){
+    announcementEditor.classList.toggle('show', ownerUnlocked);
+    if(!ownerUnlocked) announcementStatus.textContent = '';
+  }
+
+  announcementSave.addEventListener('click', async () => {
+    if(!ownerUnlocked) return;
+
+    const message = announcementInput.value.trim();
+    if(!message){
+      announcementStatus.textContent = 'Write an announcement first.';
+      return;
+    }
+
+    announcementSave.disabled = true;
+    announcementSave.textContent = 'Saving…';
+    announcementStatus.textContent = '';
+
+    const { error } = await sb
+      .from('photo_details')
+      .upsert(
+        { storage_path: ANNOUNCEMENT_KEY, caption: message },
+        { onConflict: 'storage_path' }
+      );
+
+    announcementSave.disabled = false;
+    announcementSave.textContent = 'Post';
+
+    if(error){
+      console.error(error);
+      announcementStatus.textContent = 'Could not save: ' + error.message;
+      return;
+    }
+
+    announcementText.textContent = message;
+    announcementBox.classList.add('show');
+    announcementStatus.textContent = 'Announcement posted ✓';
   });
-  announcementClear.addEventListener('click',async()=>{
-    if(!ownerUnlocked)return;
-    const {error}=await sb.from('announcements').delete().eq('id',1);
-    if(error){alert('Could not remove announcement: '+error.message);return;}
-    announcementInput.value='';announcementText.textContent='';announcementBox.classList.remove('show');
+
+  announcementClear.addEventListener('click', async () => {
+    if(!ownerUnlocked) return;
+
+    announcementClear.disabled = true;
+    announcementStatus.textContent = '';
+
+    const { error } = await sb
+      .from('photo_details')
+      .delete()
+      .eq('storage_path', ANNOUNCEMENT_KEY);
+
+    announcementClear.disabled = false;
+
+    if(error){
+      console.error(error);
+      announcementStatus.textContent = 'Could not remove: ' + error.message;
+      return;
+    }
+
+    announcementInput.value = '';
+    announcementText.textContent = '';
+    announcementBox.classList.remove('show');
+    announcementStatus.textContent = 'Announcement removed ✓';
   });
 
 
@@ -366,8 +464,8 @@
     ownerLabel.textContent = ownerUnlocked ? 'Add photo' : 'Owner login';
     logoutBtn.style.display = ownerUnlocked ? 'inline-flex' : 'none';
     updateCaptionControls();
-  
-    updateAnnouncementControls();}
+    updateAnnouncementControls();
+  }
 
   async function refreshSession(){
     const { data } = await sb.auth.getSession();
@@ -428,6 +526,7 @@
   sb.auth.onAuthStateChange((_event, session) => {
     ownerUnlocked = !!session;
     updateOwnerControls();
+    loadAnnouncement();
   });
 
   function updateEmptyState(){
